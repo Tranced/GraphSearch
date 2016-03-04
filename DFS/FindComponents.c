@@ -1,0 +1,126 @@
+/** 
+FindComponents.c
+By Terence Yang
+thyang@ucsc.edu
+CMPS 101 
+PA 5
+**/
+
+#include<string.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include "List.h"
+#include "Graph.h"
+
+#define MAXLEN 256
+
+int main (int argc, char* argv[])
+{
+  // check command line for correct number of inputs
+  if( argc != 3)
+  {
+    printf("Usage: %s <input file> <output file> \n", argv[0]);
+    exit(1);
+  }
+
+  FILE *in, *out;
+  char line[MAXLEN];
+
+  in = fopen(argv[1], "r");
+  out = fopen(argv[2], "w");
+
+  if(in == NULL)
+  {
+    printf("Unable to open file %s for reading\n", argv[1]);
+    exit(1);
+  }
+  if(out == NULL)
+  {
+    printf("Unable to open file %s for writing\n", argv[2]);
+    exit(1);
+  }
+
+  //Read First Line
+  fgets(line, MAXLEN, in);
+  int graphOrder, u, v, i, SCcomps;
+  sscanf(line, "%d", &graphOrder); // Get token graphOrder
+  printf("GraphOrder: %d", graphOrder);
+  Graph G = newGraph(graphOrder); // Create new Graph
+  Graph T = newGraph(graphOrder);
+  // get initial graph
+  while(fgets(line,MAXLEN,in) != NULL)
+  {
+    sscanf(line, "%d %d", &u, &v);
+    if (u == 0 && v == 0) break;
+    addArc(G, u, v);
+    u = 0;
+    v = 0;
+  }
+
+  // initialize List
+  List S; 
+  S = newList();
+  //printf("This is Graph Size: %d", getOrder(G));
+  for(i = 1; i <= graphOrder; i++){ append(S,i); } 
+  //printf("This is List Size: %d", length(S));
+  // Use DFS on Graph
+  //printList(stderr, S);
+  DFS(G, S);
+  fprintf(out, "Adjacency List representation of G:\n");
+  printGraph(out, G); // print initial graph
+  //printList(stderr, S);
+
+  T = transpose(G); // get transpose
+  //printf("This is Graph Size: %d", getOrder(T));
+  //printf("This is List Size: %d", length(S));
+  DFS(T,S); // run DFS on transpose to get strongly connected components
+  //fprintf(out, "Adjacency List representation of T:\n");
+  //printGraph(out, T); // print initial graph
+  SCcomps = 0; // Strongly Connected component counter
+
+  for(moveFront(S); index(S) >= 0; moveNext(S))
+  {
+    if(getParent(T, get(S)) != NIL) { SCcomps++; }
+  }
+
+  // Initialize Matrix Strongly Connect Components
+  List *SCcomponent;
+  SCcomponent = calloc(SCcomps+1, sizeof(List));
+
+  for(i = 1; i <= SCcomps; i++)
+  {
+    SCcomponent[i] = newList();
+  }
+
+
+  int s = SCcomps; // s comparator
+  // for all vertexes in graph
+  for(front(S); length(S) > 0; deleteFront(S))
+  {
+    if(getParent(T,front(S)) == NIL) // if first thing in list does not have a parent in T, then decrement a list and create a new one.
+    {
+      SCcomponent[s-1] = newList();
+      s--;
+    }
+    append(SCcomponent[s], front(S));
+  }
+
+  // prints out Strongly Connected Components
+  fprintf(out, "\n G contains %d strongly connected components:", SCcomps);
+
+  for(i = 1; i < SCcomps; i++)
+  {
+    fprintf(out, "\nComponent %d: ", i);
+    printList(out, SCcomponent[i]);
+    freeList(&(SCcomponent[i])); // free every list after printing
+  }
+
+  free(SCcomponent);
+  freeList(&S);
+  freeGraph(&G);
+  freeGraph(&T);
+  fclose(in);
+  fclose(out);
+  return(0);
+}
+

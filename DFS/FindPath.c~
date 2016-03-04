@@ -1,0 +1,122 @@
+/** 
+FindComponents.c
+By Terence Yang
+thyang@ucsc.edu
+CMPS 101 
+PA 4
+**/
+
+#include<string.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include "List.h"
+#include "Graph.h"
+
+#define MAXLEN 256
+
+int main (int argc, char* argv[])
+{
+  // check command line for correct number of inputs
+  if( argc != 3)
+  {
+    printf("Usage: %s <input file> <output file> \n", argv[0]);
+    exit(1);
+  }
+
+  FILE *in, *out;
+  char line[MAXLEN];
+
+  in = fopen(argv[1], "r");
+  out = fopen(argv[2], "w");
+
+  if(in == NULL)
+  {
+    printf("Unable to open file %s for reading\n", argv[1]);
+    exit(1);
+  }
+  if(out == NULL)
+  {
+    printf("Unable to open file %s for writing\n", argv[2]);
+    exit(1);
+  }
+
+  //Read First Line
+  fgets(line, MAXLEN, in);
+  int graphOrder, u, v, i, SCcomps;
+  sscanf(line, "%d", &graphOrder); // Get token graphOrder
+  Graph G = newGraph(graphOrder); // Create new Graph
+  Graph T;
+  // get initial graph
+  while(fgets(line,MAXLEN,in) != NULL)
+  {
+    sscanf(line, "%d %d", &u, &v);
+    if (u == 0 && v == 0) break;
+    addArc(G, u, v);
+    u = 0;
+    v = 0;
+  }
+
+  // initialize List
+  List S; 
+  S = newList();
+  for(i = 1; i <= graphOrder; i++){ append(S,i); } 
+
+  // Use DFS on Graph
+  DFS(G, S);
+  printGraph(out, G); // print initial graph
+
+  T = transpose(G); // get transpose
+  DFS(T,S); // run DFS on transpose to get strongly connected components
+
+  SCcomps = 0; // Strongly Connected component counter
+
+  for(moveFront(S); index(S) >= 0; moveNext(S))
+  {
+    if(getParent(T, get(S)) != NIL) { SCcomps++; }
+  }
+
+  // Initialize Matrix Strongly Connect Components
+  int* SCcomponent;
+  SCcomponent = calloc(SCcomps+1, sizeof(List));
+
+  for(i = 1; i <= SCcomps; i++)
+  {
+    SCcomponent[i] = newList();
+  }
+
+
+  int s = SCcomps; // s comparator
+  // for all vertexes in graph
+  for(moveFront(S); index(S) >= 0; moveNext(S))
+  {
+    if(getParent(T, get(S)) != NIL) // add element in S to new List if it has a parent in transposed Graph
+    {
+      append(SCcomponent[s], get(S));
+    }
+    
+    else // else search/start on new list
+    {
+      s--;
+      SCcomponent[s] = newList();
+    }
+  }
+
+ // prints out scc's
+  fprintf(out, " G contains %d strongly connected components:", SCcomps);
+
+  for(i = 1; i <= SCcomps; i++)
+  {
+    fprintf(output, "\nComponent %d: ", i);
+    printList(out, SCcomponent[i]);
+    freeList(&(SCcomponent[j]));
+  }
+
+  free(SCcompenent);
+  freeList(&L);
+  freeGraph(&G);
+  freeGraph(&G);
+  fclose(in);
+  fclose(out);
+  return(0);
+}
+

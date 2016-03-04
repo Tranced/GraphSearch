@@ -1,0 +1,13 @@
+README 
+by Terence Yang 
+CMPS 101
+PA4
+
+Graph.h-----------Header File for Graph
+Graph.c-----------Graph Data Structure Implementation using an array of Lists
+GraphTest.c-------Test Client for Graph
+List.h------------Header File for Doubly Linked List
+List.c------------Doubly Linked List Data Structure Implementation
+FindPath.c--------Use of BFS to organize nodes and find paths using an adjacency Matrix
+Makefile----------Runs all c files in directory and gives an executable called Lex
+README------------This is the README
